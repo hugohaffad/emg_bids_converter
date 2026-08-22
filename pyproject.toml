@@ -1,5 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "emg-bids-converter"
-version = "0.1.0"
-requires-python = ">=3.13"
+version = "0.0.1"
 dependencies = []
+requires-python = ">=3.13"
+authors = [
+  { name="Hugo Haffad", email="hugo.haffad@utoulouse.fr" },
+]
+description = "Convert proprietary EMG formats to EMG-BIDS"
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+keywords = ["bids", "emg", "hdsemg"]
+
+[project.urls]
+Homepage = "https://github.com/hugohaffad/emg_bids_converter"
+Issues = "https://github.com/hugohaffad/emg_bids_converter/issues"
+
+[project.scripts]
+emg-bids = "emg_bids_converter.cli:main"
