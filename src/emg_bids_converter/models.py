@@ -74,3 +74,14 @@ class Electrode:
         self.z = z
         self.coordinate_system = coordinate_system
         self.group = group
+
+class CoordinateSystem:
+    def __init__(
+            self,
+            parent_coordinate_system,
+            anchor_electrode,
+            anchor_coordinates
+    ):
+        self.parent_coordinate_system = parent_coordinate_system
+        self.anchor_electrode = anchor_electrode
+        self.anchor_coordinates = anchor_coordinates
