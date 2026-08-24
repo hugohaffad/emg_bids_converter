@@ -78,10 +78,32 @@ class Electrode:
 class CoordinateSystem:
     def __init__(
             self,
-            parent_coordinate_system,
-            anchor_electrode,
-            anchor_coordinates
+            name,
+            emg_coordinate_system,
+            emg_coordinate_units,
+            emg_coordinate_system_description = None,
+            parent_coordinate_system = None,
+            anchor_electrode = None,
+            anchor_coordinates = None
     ):
+        self.name = name
+        self.emg_coordinate_system = emg_coordinate_system
+        self.emg_coordinate_units = emg_coordinate_units
+        self.emg_coordinate_system_description = emg_coordinate_system_description
         self.parent_coordinate_system = parent_coordinate_system
         self.anchor_electrode = anchor_electrode
         self.anchor_coordinates = anchor_coordinates
+
+class Recording:
+    def __init__(
+            self,
+            signal,
+            channels,
+            electrodes,
+            coordinate_systems,
+            metadata):
+        self.signal = signal
+        self.channels = channels
+        self.electrodes = electrodes
+        self.coordinate_systems = coordinate_systems
+        self.metadata = metadata
