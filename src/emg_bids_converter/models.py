@@ -8,7 +8,7 @@ class Metadata:
             emg_reference,
             recording_type,
             software_filters,
-            emg_placement_scheme_description,
+            emg_placement_scheme_description = None,
             emg_channel_count = None,
             hardware_filters = None,
             task_name = None,
@@ -33,3 +33,25 @@ class Metadata:
         self.emg_ground = emg_ground
         self.interelectrode_distance = interelectrode_distance
         self.skin_preparation = skin_preparation
+
+class Channel:
+    """Channel: a single analog-to-digital converter in the recording system that regularly samples the value of a
+    transducer, which results in the signal being represented as a time series in the digitized data"""
+    def __init__(
+            self,
+            name,
+            type,
+            units,
+            signal_electrode = None,
+            reference = None,
+            target_muscle = None,
+            group = None,
+            sampling_frequency = None):
+        self.name = name
+        self.type = type
+        self.units = units
+        self.signal_electrode = signal_electrode
+        self.reference = reference
+        self.target_muscle = target_muscle
+        self.group = group
+        self.sampling_frequency = sampling_frequency
