@@ -36,3 +36,6 @@ htmlcov/
 
 # Environment / secrets
 .env
+/private/
+/tests/
+/data/
