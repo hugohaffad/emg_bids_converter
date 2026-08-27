@@ -1,5 +1,5 @@
 from tkinter import *
-from emg_bids_converter._front_end.Home import *
+from emg_bids_converter._front_end.Home import Home
 
 class App(Tk):
     """Instantiates an App window"""
