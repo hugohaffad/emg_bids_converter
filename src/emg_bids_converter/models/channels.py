@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from ..core.validators import check_field
+
 
 @dataclass(frozen=True)
 class Channel:
@@ -21,3 +23,18 @@ class Channel:
     notch: str | None = None
     status: str | None = None
     status_description: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.name__channels.strip():
+            raise ValueError("name cannot be empty")
+        if not self.type__channels.strip():
+            raise ValueError("type cannot be empty")
+        if not self.units.strip():
+            raise ValueError("units cannot be empty")
+
+        check_field("type__channels", self.type__channels)
+        for field in ("placement_scheme", "status", "group__emg", "sampling_frequency",
+                      "interelectrode_distance", "low_cutoff", "high_cutoff"):
+            value = getattr(self, field)
+            if value is not None:
+                check_field(field, value)
