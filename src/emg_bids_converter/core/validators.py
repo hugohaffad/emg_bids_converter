@@ -1,7 +1,9 @@
 """Checks against the BIDS schema."""
 
-import jsonschema
 from collections.abc import Mapping
+from dataclasses import fields
+
+import jsonschema
 
 from .schema import load
 
@@ -39,3 +41,15 @@ def check_field(field: str, value) -> None:
     except jsonschema.ValidationError as e:
         exc = TypeError if e.validator == "type" else ValueError
         raise exc(f"invalid {field}={value!r}: {e.message}") from e
+
+
+def check_dataclass(instance, required: tuple[str, ...] = ()) -> None:
+    """Validate every field of a dataclass instance against the schema."""
+    for field in fields(instance):
+        value = getattr(instance, field.name)
+        if field.name in required:
+            if isinstance(value, str) and not value.strip():
+                raise ValueError(f"{field.name} cannot be empty")
+        elif value is None:
+            continue
+        check_field(field.name, value)
