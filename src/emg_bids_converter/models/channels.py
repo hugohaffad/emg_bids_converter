@@ -1,6 +1,6 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 
-from ..core.validators import check_field
+from ..core.validators import check_dataclass
 
 
 @dataclass(frozen=True)
@@ -25,11 +25,4 @@ class Channel:
     status_description: str | None = None
 
     def __post_init__(self) -> None:
-        for field in fields(self):
-            value = getattr(self, field.name)
-            if field.name in ("name__channels", "type__channels", "units"):
-                if not value.strip():
-                    raise ValueError(f"{field.name} cannot be empty")
-            elif value is None:
-                continue
-            check_field(field.name, value)
+        check_dataclass(self, required=("name__channels", "type__channels", "units"))

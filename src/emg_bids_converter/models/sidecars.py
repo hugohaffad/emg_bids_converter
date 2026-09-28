@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from ..core.validators import check_dataclass
+
 
 @dataclass(frozen=True)
 class Sidecar:
@@ -48,3 +50,9 @@ class Sidecar:
     InstitutionName: str | None = None
     InstitutionAddress: str | None = None
     InstitutionalDepartmentName: str | None = None
+
+    def __post_init__(self) -> None:
+        check_dataclass(self, required=(
+            "EMGPlacementScheme", "EMGReference", "SamplingFrequency", "PowerLineFrequency",
+            "RecordingType", "SoftwareFilters", "TaskName",
+        ))

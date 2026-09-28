@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from ..core.validators import check_dataclass
+
 
 @dataclass(frozen=True)
 class DatasetDescription:
@@ -20,3 +22,6 @@ class DatasetDescription:
     DatasetDOI: str | None = None
     SourceDatasets: list[dict] | None = None
     GeneratedBy: list[dict] | None = None
+
+    def __post_init__(self) -> None:
+        check_dataclass(self, required=("Name", "BIDSVersion"))

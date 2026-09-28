@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from ..core.validators import check_dataclass
+
 
 @dataclass(frozen=True)
 class Electrode:
@@ -13,3 +15,6 @@ class Electrode:
     material: str | None = None
     impedance: float | None = None
     group__emg: float | str | None = None
+
+    def __post_init__(self) -> None:
+        check_dataclass(self, required=("name__electrodes", "x", "y"))
