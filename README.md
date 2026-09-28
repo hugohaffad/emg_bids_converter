@@ -8,3 +8,11 @@
 
 EMG-BIDS Converter is an open-source Python package for converting electromyography (EMG) recordings from proprietary
 formats to the Brain Imaging Data Structure (BIDS) standard.
+
+## Installation
+
+```bash
+git clone https://github.com/hugohaffad/emg_bids_converter.git
+cd emg_bids_converter
+uv sync
+```
