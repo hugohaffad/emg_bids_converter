@@ -1,6 +1,6 @@
 import pytest
 
-from emg_bids_converter.models.dataset import DatasetDescription
+from emg_bids_converter.models.dataset_description import DatasetDescription
 
 
 def test_dataset_description_valid():
