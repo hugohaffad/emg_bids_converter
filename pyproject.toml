@@ -9,6 +9,7 @@ authors = [{ name = "Hugo Haffad" }]
 requires-python = ">=3.12"
 dependencies = [
     "bidsschematools>=1.2.7",
+    "jsonschema>=4.26.0",
 ]
 
 [build-system]

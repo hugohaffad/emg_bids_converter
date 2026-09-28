@@ -1,5 +1,8 @@
 """Checks against the BIDS schema."""
 
+import jsonschema
+from collections.abc import Mapping
+
 from .schema import load
 
 
@@ -19,8 +22,20 @@ def schema_enum(key: str) -> tuple[str, ...] | None:
     return tuple(values) if values is not None else None
 
 
-def check_enum(field: str, value: str) -> None:
-    """Raise ValueError if value isn't among the schema's allowed values for that field, if any."""
-    allowed = schema_enum(field)
-    if allowed is not None and value not in allowed:
-        raise ValueError(f"invalid {field}={value!r}; expected one of: {', '.join(allowed)}")
+def _plain(obj):
+    """Convert a Namespace into plain dicts/lists."""
+    if isinstance(obj, Mapping):
+        return {k: _plain(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_plain(v) for v in obj]
+    return obj
+
+
+def check_field(field: str, value) -> None:
+    """Raise TypeError/ValueError if value violates the schema's declared constraints for that field."""
+    spec = _plain(_schema_object(field))
+    try:
+        jsonschema.validate(instance=value, schema=spec)
+    except jsonschema.ValidationError as e:
+        exc = TypeError if e.validator == "type" else ValueError
+        raise exc(f"invalid {field}={value!r}: {e.message}") from e
