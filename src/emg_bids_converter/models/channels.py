@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
 from ..core.validators import check_field
 
@@ -25,16 +25,11 @@ class Channel:
     status_description: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.name__channels.strip():
-            raise ValueError("name cannot be empty")
-        if not self.type__channels.strip():
-            raise ValueError("type cannot be empty")
-        if not self.units.strip():
-            raise ValueError("units cannot be empty")
-
-        check_field("type__channels", self.type__channels)
-        for field in ("placement_scheme", "status", "group__emg", "sampling_frequency",
-                      "interelectrode_distance", "low_cutoff", "high_cutoff"):
-            value = getattr(self, field)
-            if value is not None:
-                check_field(field, value)
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if field.name in ("name__channels", "type__channels", "units"):
+                if not value.strip():
+                    raise ValueError(f"{field.name} cannot be empty")
+            elif value is None:
+                continue
+            check_field(field.name, value)
