@@ -1,14 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
-from ..core.validators import check_dataclass
+from ..core.validators import check_row
 
 
 @dataclass(frozen=True)
 class Electrode:
     """Class implementing the fields of the *_electrodes.tsv file (one row)"""
     name__electrodes: str
-    x: float
-    y: float
+    x: float | None
+    y: float | None
     z: float | None = None
     coordinate_system: str | None = None
     type__electrodes: str | None = None
@@ -17,4 +17,4 @@ class Electrode:
     group__emg: float | str | None = None
 
     def __post_init__(self) -> None:
-        check_dataclass(self, required=("name__electrodes", "x", "y"))
+        check_row(asdict(self), rule="emg.EMGElectrodes")

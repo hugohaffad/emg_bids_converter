@@ -44,3 +44,12 @@ def test_channel_sampling_frequency_must_be_number():
 def test_channel_notch_must_be_string():
     with pytest.raises(TypeError, match="notch"):
         Channel(name__channels="ch1", type__channels="EMG", units="mV", notch=60)
+
+
+def test_channel_name_cannot_be_none():
+    with pytest.raises(ValueError, match="name__channels"):
+        Channel(name__channels=None, type__channels="EMG", units="mV")
+
+
+def test_channel_units_can_be_unknown():
+    Channel(name__channels="TRIG", type__channels="TRIG", units=None)

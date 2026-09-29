@@ -30,3 +30,12 @@ def test_electrode_group_accepts_string_or_number():
 def test_electrode_impedance_must_be_number():
     with pytest.raises(TypeError, match="impedance"):
         Electrode(name__electrodes="e1", x=1.0, y=2.0, impedance="high")
+
+
+def test_electrode_position_can_be_unknown():
+    Electrode(name__electrodes="e1", x=None, y=None)
+
+
+def test_electrode_position_must_be_given():
+    with pytest.raises(TypeError):
+        Electrode(name__electrodes="e1")

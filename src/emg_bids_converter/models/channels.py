@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
-from ..core.validators import check_dataclass
+from ..core.validators import check_row
 
 
 @dataclass(frozen=True)
@@ -25,4 +25,4 @@ class Channel:
     status_description: str | None = None
 
     def __post_init__(self) -> None:
-        check_dataclass(self, required=("name__channels", "type__channels", "units"))
+        check_row(asdict(self), rule="emg.EMGChannels")
