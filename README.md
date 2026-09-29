@@ -16,3 +16,9 @@ git clone https://github.com/hugohaffad/emg_bids_converter.git
 cd emg_bids_converter
 uv sync
 ```
+
+## Quick Start
+
+```bash
+
+```
