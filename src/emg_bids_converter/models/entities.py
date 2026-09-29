@@ -1,6 +1,8 @@
 from dataclasses import asdict, dataclass
 
-from ..core.validators import check_entities
+from ..core import check_entities
+
+_CONTEXT = {"datatype": "emg", "suffix": "emg", "extension": ".bdf"}
 
 
 @dataclass(frozen=True)
@@ -14,4 +16,4 @@ class Entities:
     recording: str | None = None
 
     def __post_init__(self) -> None:
-        check_entities(asdict(self), rule="emg.emg")
+        check_entities(asdict(self), _CONTEXT)
