@@ -1,10 +1,10 @@
+import jsonschema
 import numpy as np
 import pytest
-import jsonschema
 
 from emg_bids_converter.core.schema import load
-from emg_bids_converter.core.validators import (
-    _spec, _from_definition, _format_checker, _check_python, check_field, check_entity, check_entities, check_row
+from emg_bids_converter.core.validation.fields import (
+    _check_python, _format_checker, _from_definition, _spec, check_entity, check_field,
 )
 
 
@@ -189,58 +189,6 @@ def test_check_entity_rejects_short_entity_name():
         check_entity("sub", "01")
 
 
-def test_check_entities_accepts_required_only():
-    check_entities({"subject": "01", "task": "mvc"}, rule="emg.emg")
-
-
-def test_check_entities_rejects_missing_required():
-    with pytest.raises(ValueError, match="task is required"):
-        check_entities({"subject": "01"}, rule="emg.emg")
-
-
-def test_check_entities_rejects_entity_not_allowed_by_rule():
-    with pytest.raises(ValueError, match="space"):
-        check_entities({"subject": "01", "task": "mvc", "space": "grid"}, rule="emg.emg")
-
-
-def test_check_entities_delegates_label_check():
-    with pytest.raises(ValueError, match="task"):
-        check_entities({"subject": "01", "task": "max_force"}, rule="emg.emg")
-
-
-def test_check_entities_follows_the_rule_it_is_given():
-    check_entities({"subject": "01", "space": "grid"}, rule="channels.coordsystem__emg")
-
-
-def test_check_row_accepts_required_only():
-    check_row({"name__channels": "ch1", "type__channels": "EMG", "units": "mV"}, rule="emg.EMGChannels")
-
-
-def test_check_row_rejects_undefined_column():
-    with pytest.raises(ValueError, match="gain"):
-        check_row({"name__channels": "ch1", "type__channels": "EMG", "units": "mV", "gain": 1.0},
-                  rule="emg.EMGChannels")
-
-
-def test_check_row_validates_values_as_columns():
+def test_check_python_rejects_blank_string_in_metadata():
     with pytest.raises(ValueError, match="None"):
-        check_row({"name__channels": "ch1", "type__channels": "EMG", "units": "mV", "reference__emg": "n/a"},
-                  rule="emg.EMGChannels")
-
-
-def test_check_row_rejects_missing_row_identifier():
-    with pytest.raises(ValueError, match="name__channels identifies the row"):
-        check_row({"type__channels": "EMG", "units": "mV"}, rule="emg.EMGChannels")
-
-
-def test_check_row_accepts_missing_value_in_required_column():
-    check_row({"name__channels": "TRIG", "type__channels": "TRIG", "units": None}, rule="emg.EMGChannels")
-
-
-def test_check_row_reads_levels_written_as_objects():
-    with pytest.raises(ValueError, match="participant_id identifies the row"):
-        check_row({"age": 30}, rule="modality_agnostic.Participants")
-
-
-def test_check_row_accepts_missing_value_in_optional_index_column():
-    check_row({"name__electrodes": "e1", "x": 1.0, "y": 2.0, "group__emg": None}, rule="emg.EMGElectrodes")
+        _check_python("TaskName", "  ", "metadata")

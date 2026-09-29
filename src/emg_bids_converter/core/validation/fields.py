@@ -1,4 +1,4 @@
-"""Checks against the BIDS schema."""
+"""Field level: one value against its definition in schema.objects."""
 
 import math
 import re
@@ -10,14 +10,14 @@ from jsonschema.exceptions import best_match
 from jsonschema.protocols import Validator
 from jsonschema.validators import validator_for
 
-from .schema import load
+from ..schema import load
 
 Section = Literal["columns", "metadata"]
 
 
 @cache
 def _spec(field: str, section: Section) -> dict:
-    """Return the schema definition of a BIDS field as a plain dict."""
+    """Return the schema definition of a BIDS field as a plain dict (cached)."""
     objects = load().objects[section]
     if field not in objects:
         raise KeyError(f"{field!r} not found in schema objects.{section}")
@@ -35,7 +35,7 @@ def _from_definition(definition: dict) -> dict:
 
 
 def _matcher(pattern: str):
-    """Return a function telling whether a value fully matches pattern."""
+    """Return a function telling whether a value fully matches pattern (non-strings pass)."""
     def match(value) -> bool:
         return not isinstance(value, str) or re.fullmatch(pattern, value) is not None
     return match
@@ -43,7 +43,7 @@ def _matcher(pattern: str):
 
 @cache
 def _format_checker() -> FormatChecker:
-    """Build a FormatChecker from the regex patterns declared in objects.formats."""
+    """Build a FormatChecker from the regex patterns declared in schema.objects.formats."""
     checker = FormatChecker(formats=())
     for name, fmt in load().objects.formats.items():
         checker.checks(name)(_matcher(fmt.pattern))
@@ -56,8 +56,10 @@ def _check_python(field: str, value, section: Section) -> None:
         raise TypeError(f"invalid {field}={value!r}: {type(value).__name__} is not a native Python type")
     if type(value) is float and not math.isfinite(value):
         raise ValueError(f"invalid {field}={value!r}: must be a finite number")
+    if type(value) is str and not value.strip():
+        raise ValueError(f"invalid {field}={value!r}: use None for missing values")
     if type(value) is str and section == "columns":
-        if not value.strip() or value == "n/a":
+        if value == "n/a":
             raise ValueError(f"invalid {field}={value!r}: use None for missing values")
         if any(char in value for char in "\t\n\r"):
             raise ValueError(f"invalid {field}={value!r}: tabs and line breaks are not supported in TSV cells")
@@ -105,46 +107,3 @@ def check_entity(entity: str, value) -> None:
     pattern = _entity_pattern(entity)
     if pattern.fullmatch(value) is None:
         raise ValueError(f"invalid {entity}={value!r}: must match {pattern.pattern}")
-
-
-def _rule(path: str):
-    """Return the schema rule found at rules.<path> (e.g. "tabular_data.emg.EMGChannels")."""
-    node = load().rules
-    for part in path.split("."):
-        node = node[part]
-    return node
-
-
-def _level(requirement) -> str:
-    """Return a requirement level written either "required" or {"level": "required", ...}."""
-    return requirement if isinstance(requirement, str) else requirement["level"]
-
-
-def check_entities(entities: dict[str, str | None], rule: str) -> None:
-    """Raise if entities break the filename rule rules.files.raw.<rule>."""
-    levels = _rule(f"files.raw.{rule}").entities
-    unknown = set(entities) - set(levels)
-    if unknown:
-        raise ValueError(f"entities {sorted(unknown)} are not allowed by rules.files.raw.{rule}")
-    for entity, level in levels.items():
-        value = entities.get(entity)
-        if value is None:
-            if _level(level) == "required":
-                raise ValueError(f"{entity} is required by rules.files.raw.{rule}")
-            continue
-        check_entity(entity, value)
-
-
-def check_row(row: dict, rule: str) -> None:
-    """Raise if a TSV row breaks the tabular rule rules.tabular_data.<rule>."""
-    table = _rule(f"tabular_data.{rule}")
-    unknown = set(row) - set(table.columns)
-    if unknown:
-        raise ValueError(f"columns {sorted(unknown)} are not defined by rules.tabular_data.{rule}")
-    for column, requirement in table.columns.items():
-        value = row.get(column)
-        if value is None:
-            if _level(requirement) == "required" and column in table.index_columns:
-                raise ValueError(f"{column} identifies the row in rules.tabular_data.{rule} and cannot be None")
-            continue
-        check_field(column, value, "columns")
