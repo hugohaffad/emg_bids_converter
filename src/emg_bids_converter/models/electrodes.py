@@ -1,6 +1,8 @@
 from dataclasses import asdict, dataclass
 
-from ..core.validators import check_row
+from ..core import check_row
+
+_CONTEXT = {"datatype": "emg", "suffix": "electrodes", "extension": ".tsv"}
 
 
 @dataclass(frozen=True)
@@ -17,4 +19,4 @@ class Electrode:
     group__emg: float | str | None = None
 
     def __post_init__(self) -> None:
-        check_row(asdict(self), rule="emg.EMGElectrodes")
+        check_row(asdict(self), _CONTEXT)
