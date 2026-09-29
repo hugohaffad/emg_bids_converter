@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
-from ..core.validators import check_dataclass
+from ..core import check_metadata
+
+_CONTEXT = {"path": "/dataset_description.json", "extension": ".json"}
 
 
 @dataclass(frozen=True)
@@ -24,4 +26,4 @@ class DatasetDescription:
     GeneratedBy: list[dict] | None = None
 
     def __post_init__(self) -> None:
-        check_dataclass(self, required=("Name", "BIDSVersion"))
+        check_metadata(asdict(self), _CONTEXT)

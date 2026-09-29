@@ -22,3 +22,14 @@ def test_dataset_description_authors_must_be_list_of_strings():
     DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", Authors=["Hugo Haffad"])
     with pytest.raises(TypeError, match="Authors"):
         DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", Authors="Hugo Haffad")
+
+
+def test_dataset_description_derivative_requires_generated_by():
+    with pytest.raises(ValueError, match="GeneratedBy"):
+        DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", DatasetType="derivative")
+
+
+def test_dataset_description_generated_by_requires_name():
+    DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", GeneratedBy=[{"Name": "emg-bids-converter"}])
+    with pytest.raises(ValueError, match="GeneratedBy"):
+        DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", GeneratedBy=[{"Version": "0.1.0"}])
