@@ -3,17 +3,6 @@
 The BIDS schema and the checks built on it. The BIDS schema used is bundled with
 [`bidsschematools`](https://github.com/bids-standard/bids-specification/tree/master/tools/schemacode).
 
-```
-core
-├── validation
-│   ├── expressions.py
-│   ├── fields.py
-│   ├── objects.py
-│   └── rules.py
-├── README.md
-└── schema.py
-```
-
 
 ## Modules
 
