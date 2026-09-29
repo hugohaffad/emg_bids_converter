@@ -1,6 +1,6 @@
 import pytest
 
-from emg_bids_converter.models.channels import Channel
+from emg_bids_converter.models.emg.channels import Channel
 
 
 def test_channel_valid():

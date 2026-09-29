@@ -1,6 +1,6 @@
 import pytest
 
-from emg_bids_converter.models.electrodes import Electrode
+from emg_bids_converter.models.emg.electrodes import Electrode
 
 
 def test_electrode_valid():

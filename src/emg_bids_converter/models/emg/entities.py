@@ -1,6 +1,6 @@
 from dataclasses import asdict, dataclass
 
-from ..core import check_entities
+from ...core import check_entities
 
 _CONTEXT = {"datatype": "emg", "suffix": "emg", "extension": ".bdf"}
 

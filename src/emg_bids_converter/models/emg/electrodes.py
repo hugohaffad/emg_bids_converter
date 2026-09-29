@@ -1,6 +1,6 @@
 from dataclasses import asdict, dataclass
 
-from ..core import check_row
+from ...core import check_row
 
 _CONTEXT = {"datatype": "emg", "suffix": "electrodes", "extension": ".tsv"}
 

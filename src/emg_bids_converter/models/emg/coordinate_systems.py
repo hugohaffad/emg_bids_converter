@@ -1,6 +1,6 @@
 from dataclasses import asdict, dataclass
 
-from ..core import check_metadata
+from ...core import check_metadata
 
 _CONTEXT = {"datatype": "emg", "suffix": "coordsystem", "extension": ".json"}
 

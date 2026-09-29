@@ -1,6 +1,6 @@
 import pytest
 
-from emg_bids_converter.models.sidecars import Sidecar
+from emg_bids_converter.models.emg.sidecars import Sidecar
 
 
 def _sidecar(**overrides):

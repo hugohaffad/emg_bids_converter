@@ -1,6 +1,6 @@
 import pytest
 
-from emg_bids_converter.models.coordinate_systems import CoordinateSystem
+from emg_bids_converter.models.emg.coordinate_systems import CoordinateSystem
 
 _DESCRIPTION = "Grid-relative positions, origin at the first electrode"
 

@@ -1,6 +1,6 @@
 import pytest
 
-from emg_bids_converter.models.entities import Entities
+from emg_bids_converter.models.emg.entities import Entities
 
 
 def test_entities_valid():
