@@ -62,12 +62,13 @@ def row_issues(row: Mapping, context: Mapping) -> list[Issue]:
     applied, _ = applicable(("tabular_data",), context)
     path = single(applied, "tabular", context)
     table = rule(path)
+    index_columns = table.get("index_columns", ())
     issues = [Issue("error", column, f"{column} is not defined by rules.{path}")
               for column in row if column not in table.columns]
     for column, requirement in table.columns.items():
         value = row.get(column)
         if value is None:
-            if level(requirement) == "required" and column in table.index_columns:
+            if level(requirement) == "required" and column in index_columns:
                 issues.append(Issue("error", column, f"{column} identifies the row in rules.{path} and cannot be None"))
             continue
         if issue := _field_issue(check_field, column, value, "columns"):

@@ -112,6 +112,11 @@ def test_check_entities_rejects_unknown_file_context():
         check_entities({"subject": "01"}, {"datatype": "emg", "suffix": "nonsense", "extension": ".tsv"})
 
 
+def test_check_row_accepts_table_without_index_columns():
+    check_row({"name__optodes": "S1", "type__optodes": "source", "x__optodes": 1.0, "y__optodes": 2.0},
+              {"datatype": "nirs", "suffix": "optodes", "extension": ".tsv"})
+
+
 def test_check_row_rejects_unknown_file_context():
     with pytest.raises(ValueError, match="no tabular rule"):
         check_row({"name__channels": "ch1"}, {"datatype": "emg", "suffix": "nonsense", "extension": ".tsv"})
