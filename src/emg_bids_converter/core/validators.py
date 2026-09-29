@@ -1,55 +1,107 @@
 """Checks against the BIDS schema."""
 
-from collections.abc import Mapping
-from dataclasses import fields
+import math
+import re
+from functools import cache
+from typing import Literal
 
-import jsonschema
+from jsonschema import FormatChecker
+from jsonschema.exceptions import best_match
+from jsonschema.protocols import Validator
+from jsonschema.validators import validator_for
 
 from .schema import load
 
-
-def _schema_object(key: str):
-    """Return the schema definition of a BIDS field. Raises KeyError if the field is not defined in the schema."""
-    schema = load()
-    if key in schema.objects.columns:
-        return schema.objects.columns[key]
-    if key in schema.objects.metadata:
-        return schema.objects.metadata[key]
-    raise KeyError(f"{key!r} not found.")
+Section = Literal["columns", "metadata"]
 
 
-def schema_enum(key: str) -> tuple[str, ...] | None:
-    """Return the allowed values if they exist for a BIDS schema field, else None."""
-    values = _schema_object(key).get("enum")
-    return tuple(values) if values is not None else None
+@cache
+def _spec(field: str, section: Section) -> dict:
+    """Return the schema definition of a BIDS field as a plain dict."""
+    objects = load().objects[section]
+    if field not in objects:
+        raise KeyError(f"{field!r} not found in schema objects.{section}")
+    return objects[field].to_dict()
 
 
-def _plain(obj):
-    """Convert a Namespace into plain dicts/lists."""
-    if isinstance(obj, Mapping):
-        return {k: _plain(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_plain(v) for v in obj]
-    return obj
+def _from_definition(definition: dict) -> dict:
+    """Translate a column `definition` block (participants.tsv style) into JSON Schema."""
+    spec = {"type": definition["Format"]}
+    if "Maximum" in definition:
+        spec["maximum"] = definition["Maximum"]
+    if "Levels" in definition:
+        spec["enum"] = list(definition["Levels"])
+    return spec
 
 
-def check_field(field: str, value) -> None:
-    """Raise TypeError/ValueError if value violates the schema's declared constraints for that field."""
-    spec = _plain(_schema_object(field))
-    try:
-        jsonschema.validate(instance=value, schema=spec)
-    except jsonschema.ValidationError as e:
-        exc = TypeError if e.validator == "type" else ValueError
-        raise exc(f"invalid {field}={value!r}: {e.message}") from e
+def _matcher(pattern: str):
+    """Return a function telling whether a value fully matches pattern (non-strings pass)."""
+    def match(value) -> bool:
+        return not isinstance(value, str) or re.fullmatch(pattern, value) is not None
+    return match
 
 
-def check_dataclass(instance, required: tuple[str, ...] = ()) -> None:
-    """Validate every field of a dataclass instance against the schema."""
-    for field in fields(instance):
-        value = getattr(instance, field.name)
-        if field.name in required:
-            if isinstance(value, str) and not value.strip():
-                raise ValueError(f"{field.name} cannot be empty")
-        elif value is None:
-            continue
-        check_field(field.name, value)
+@cache
+def _format_checker() -> FormatChecker:
+    """Build a FormatChecker from the regex patterns declared in objects.formats."""
+    checker = FormatChecker(formats=())
+    for name, fmt in load().objects.formats.items():
+        checker.checks(name)(_matcher(fmt.pattern))
+    return checker
+
+
+def _check_python(field: str, value, section: Section) -> None:
+    """Raise TypeError/ValueError for values a JSON or TSV file cannot faithfully hold."""
+    if type(value) not in (str, int, float, bool, list, dict):
+        raise TypeError(f"invalid {field}={value!r}: {type(value).__name__} is not a native Python type")
+    if type(value) is float and not math.isfinite(value):
+        raise ValueError(f"invalid {field}={value!r}: must be a finite number")
+    if type(value) is str and section == "columns":
+        if value in ("", "n/a"):
+            raise ValueError(f"invalid {field}={value!r}: use None for missing values")
+        if any(char in value for char in "\t\n\r"):
+            raise ValueError(f"invalid {field}={value!r}: tabs and line breaks are not supported in TSV cells")
+    if type(value) is list:
+        for item in value:
+            _check_python(field, item, section)
+    if type(value) is dict:
+        for key, item in value.items():
+            if type(key) is not str:
+                raise TypeError(f"invalid {field}: key {key!r} must be a string")
+            _check_python(field, item, section)
+
+
+@cache
+def _validator(field: str, section: Section) -> Validator:
+    """Build, once per field, the validator enforcing its schema constraints."""
+    spec = _spec(field, section)
+    if "definition" in spec:
+        spec = _from_definition(spec["definition"])
+    return validator_for(spec)(spec, format_checker=_format_checker())
+
+
+def check_field(field: str, value, section: Section) -> None:
+    """Raise TypeError/ValueError if value cannot be written as this BIDS field."""
+    _check_python(field, value, section)
+    error = best_match(_validator(field, section).iter_errors(value))
+    if error is not None:
+        exc = TypeError if error.validator == "type" else ValueError
+        raise exc(f"invalid {field}={value!r}: {error.message}")
+
+
+@cache
+def _entity_pattern(entity: str) -> re.Pattern:
+    """Compile, once per entity, the regex its label must fully match."""
+    entities = load().objects.entities
+    if entity not in entities:
+        raise KeyError(f"{entity!r} not found in schema objects.entities")
+    return re.compile(load().objects.formats[entities[entity].format].pattern)
+
+
+def check_entity(entity: str, value) -> None:
+    """Raise TypeError/ValueError if value is not a valid label for this BIDS entity."""
+    if type(value) is not str:
+        raise TypeError(f"invalid {entity}={value!r}: must be a string")
+    pattern = _entity_pattern(entity)
+    if pattern.fullmatch(value) is None:
+        raise ValueError(f"invalid {entity}={value!r}: must match {pattern.pattern}")
