@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
-from ..core.validators import check_dataclass
+from ..core import check_metadata
+
+_CONTEXT = {"datatype": "emg", "suffix": "coordsystem", "extension": ".json"}
 
 
 @dataclass(frozen=True)
@@ -14,4 +16,4 @@ class CoordinateSystem:
     AnchorElectrode: str | None = None
 
     def __post_init__(self) -> None:
-        check_dataclass(self, required=("EMGCoordinateSystem", "EMGCoordinateUnits"))
+        check_metadata(asdict(self), _CONTEXT)
