@@ -6,9 +6,9 @@ import numpy as np
 import xmltodict
 from dataclasses import dataclass
 
-from ..models.channels import Channel
-from ..models.recording import Recording
-from ..models.sidecars import Sidecar
+from ..models.emg.channels import Channel
+from ..models.emg.recording import Recording
+from ..models.emg.sidecars import Sidecar
 
 _SENSOR_NAME_PATTERN = re.compile(r"^HD(\d+)MM\d+$")
 
