@@ -1,6 +1,8 @@
 from dataclasses import asdict, dataclass
 
-from ..core.validators import check_row
+from ..core import check_row
+
+_CONTEXT = {"path": "/participants.tsv", "extension": ".tsv"}
 
 
 @dataclass(frozen=True)
@@ -16,4 +18,4 @@ class Participant:
     HED: str | None = None
 
     def __post_init__(self) -> None:
-        check_row(asdict(self), rule="modality_agnostic.Participants")
+        check_row(asdict(self), _CONTEXT)
