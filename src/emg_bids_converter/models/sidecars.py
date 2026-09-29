@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
-from ..core.validators import check_dataclass
+from ..core import check_metadata
+
+_CONTEXT = {"datatype": "emg", "suffix": "emg", "extension": ".bdf"}
 
 
 @dataclass(frozen=True)
@@ -52,7 +54,4 @@ class Sidecar:
     InstitutionalDepartmentName: str | None = None
 
     def __post_init__(self) -> None:
-        check_dataclass(self, required=(
-            "EMGPlacementScheme", "EMGReference", "SamplingFrequency", "PowerLineFrequency",
-            "RecordingType", "SoftwareFilters", "TaskName",
-        ))
+        check_metadata(asdict(self), _CONTEXT)
