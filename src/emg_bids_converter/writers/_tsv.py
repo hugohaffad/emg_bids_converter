@@ -1,6 +1,7 @@
-"""Serialize dataclass models to TSV files"""
+"""Serialize dataclass models to TSV files, and read them back"""
 
-from dataclasses import asdict
+import typing
+from dataclasses import asdict, fields
 from pathlib import Path
 from typing import Any, Sequence
 import numpy as np
@@ -42,3 +43,36 @@ def write_tsv(rows: Sequence[Any], path: Path, keep: Sequence[str] = ()) -> None
     lines += ["\t".join(_format(record[name]) for name in columns) for record in records]
     with path.open("w", encoding="utf-8", newline="\n") as file:
         file.write("\n".join(lines) + "\n")
+
+
+def _parse(text: str, annotation: Any) -> Any:
+    """Convert one TSV cell back to the type of its field: n/a -> None, then str, float or int"""
+    if text == "n/a":
+        return None
+    kinds = typing.get_args(annotation) or (annotation,)
+    if str in kinds:
+        return text
+    if float in kinds:
+        return float(text)
+    if int in kinds:
+        return int(text)
+    return text
+
+
+def read_tsv(path: Path, cls: type) -> list[Any]:
+    """Read the rows of a TSV file written by write_tsv back into instances of the dataclass cls"""
+    columns = load().objects.columns
+    field_of = {columns[field.name].name: field.name for field in fields(cls)}
+    hints = typing.get_type_hints(cls)
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    header = lines[0].split("\t")
+    unknown = [column for column in header if column not in field_of]
+    if unknown:
+        raise ValueError(f"{path.name}: column(s) {unknown} are not fields of {cls.__name__}")
+
+    rows = []
+    for line in lines[1:]:
+        cells = dict(zip(header, line.split("\t")))
+        rows.append(cls(**{field_of[c]: _parse(text, hints[field_of[c]]) for c, text in cells.items()}))
+    return rows
