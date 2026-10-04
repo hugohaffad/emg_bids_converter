@@ -1,6 +1,6 @@
 __pycache__/
 .pytest_cache/
-.venv/
+.venv*
 
 .idea/
 .vscode/
@@ -8,3 +8,5 @@ __pycache__/
 .DS_Store
 
 private/
+
+data/
