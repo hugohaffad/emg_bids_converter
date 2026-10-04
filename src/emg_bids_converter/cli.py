@@ -9,19 +9,14 @@ import sys
 from importlib.metadata import version
 from pathlib import Path
 
-from .core.schema import load
-from .models.dataset_description import DatasetDescription
+from .api import PACKAGE, convert_recording, create_dataset
 from .models.emg.entities import Entities
-from .readers import READERS, read
-from .writers.dataset import add_recording, init_dataset
-
-_PACKAGE = "emg-bids-converter"
-_CODE_URL = "https://github.com/hugohaffad/emg_bids_converter"
+from .readers import READERS
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="emg-bids", description="Convert EMG recordings to an EMG-BIDS dataset.")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {version(_PACKAGE)}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {version(PACKAGE)}")
     commands = parser.add_subparsers(dest="command", required=True)
 
     init = commands.add_parser("init", help="create an empty BIDS dataset")
@@ -47,14 +42,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _init(args: argparse.Namespace) -> None:
-    description = DatasetDescription(
-        Name=args.name,
-        BIDSVersion=load()["bids_version"],
-        Authors=args.authors,
-        License=args.license,
-        GeneratedBy=[{"Name": _PACKAGE, "Version": version(_PACKAGE), "CodeURL": _CODE_URL}],
-    )
-    init_dataset(args.root, description)
+    create_dataset(args.root, args.name, authors=args.authors, license=args.license)
     print(f"Created dataset {args.name!r} in {args.root}")
 
 
@@ -67,13 +55,8 @@ def _add(args: argparse.Namespace) -> None:
         run=args.run,
         recording=args.recording,
     )
-    recording = read(
-        args.file,
-        task_name=args.task,
-        emg_reference=args.emg_reference,
-        powerline_frequency=args.powerline_frequency,
-    )
-    written = add_recording(args.root, entities, recording)
+    written = convert_recording(args.root, args.file, entities, args.emg_reference,
+                                powerline_frequency=args.powerline_frequency)
     print(f"Added {args.file.name} as sub-{args.subject} ({len(written)} files written)")
 
 
