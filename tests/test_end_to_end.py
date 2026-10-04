@@ -58,3 +58,27 @@ def test_otb4_dataset_is_valid_bids(tmp_path, path):
     np.testing.assert_allclose(np.asarray(signals)[:, :n_samples], recording.signal, rtol=0, atol=bound / 2**22)
 
     _bids_validator(root)
+
+
+
+def test_cli_init_then_add_every_otb4_sample(tmp_path):
+    """emg-bids init, then emg-bids add for each OTB4 sample (one subject each), gives a valid BIDS dataset"""
+    from emg_bids_converter.cli import main
+
+    samples = _otb4_samples()
+    if not samples:
+        pytest.skip("no OTB4 sample (set EMG_BIDS_OTB4 or put a file in data/)")
+    root = tmp_path / "ds"
+
+    assert main(["init", str(root), "--name", "CLI end-to-end test", "--author", "Test Author"]) == 0
+    for i, path in enumerate(samples, start=1):
+        assert main([
+            "add", str(root), str(path),
+            "--subject", f"{i:02d}", "--task", "mvc", "--emg-reference", "Not specified (end-to-end test)",
+        ]) == 0
+
+    subjects = [f"sub-{i:02d}" for i in range(1, len(samples) + 1)]
+    assert (root / "participants.tsv").read_text(encoding="utf-8").splitlines() == ["participant_id", *subjects]
+    # adding the same recording twice is refused, and leaves the dataset as it was
+    assert main(["add", str(root), str(samples[0]), "--subject", "01", "--task", "mvc", "--emg-reference", "x"]) == 1
+    _bids_validator(root)
