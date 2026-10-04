@@ -1,35 +1,53 @@
 import pytest
 
-from emg_bids_converter.models.dataset_description import DatasetDescription
+from emg_bids_converter.models.dataset import Dataset
+from emg_bids_converter.models.emg.entities import Entities
+from emg_bids_converter.models.participants import Participant
 
 
-def test_dataset_description_valid():
-    DatasetDescription(Name="my dataset", BIDSVersion="1.11.1")
+def test_dataset_valid(make_dataset):
+    make_dataset(subjects=("01", "02"))
 
 
-def test_dataset_description_name_cannot_be_empty():
-    with pytest.raises(ValueError, match="Name"):
-        DatasetDescription(Name="", BIDSVersion="1.11.1")
+def test_dataset_needs_a_recording(make_dataset):
+    dataset = make_dataset()
+    with pytest.raises(ValueError, match="at least one recording"):
+        Dataset(description=dataset.description, participants=dataset.participants, recordings=[])
 
 
-def test_dataset_description_type_enum():
-    DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", DatasetType="raw")
-    with pytest.raises(ValueError, match="DatasetType"):
-        DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", DatasetType="processed")
+def test_dataset_participant_ids_are_unique(make_dataset):
+    dataset = make_dataset()
+    with pytest.raises(ValueError, match="duplicate participant_id"):
+        Dataset(
+            description=dataset.description,
+            participants=dataset.participants * 2,
+            recordings=dataset.recordings,
+        )
 
 
-def test_dataset_description_authors_must_be_list_of_strings():
-    DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", Authors=["Hugo Haffad"])
-    with pytest.raises(TypeError, match="Authors"):
-        DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", Authors="Hugo Haffad")
+def test_dataset_recordings_have_distinct_entities(make_dataset):
+    dataset = make_dataset()
+    with pytest.raises(ValueError, match="share the entities"):
+        Dataset(
+            description=dataset.description,
+            participants=dataset.participants,
+            recordings=dataset.recordings * 2,
+        )
 
 
-def test_dataset_description_derivative_requires_generated_by():
-    with pytest.raises(ValueError, match="GeneratedBy"):
-        DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", DatasetType="derivative")
-
-
-def test_dataset_description_generated_by_requires_name():
-    DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", GeneratedBy=[{"Name": "emg-bids-converter"}])
-    with pytest.raises(ValueError, match="GeneratedBy"):
-        DatasetDescription(Name="my dataset", BIDSVersion="1.11.1", GeneratedBy=[{"Version": "0.1.0"}])
+def test_dataset_participants_match_subjects(make_dataset, make_recording):
+    dataset = make_dataset()
+    # a recording for sub-02, who has no row in participants.tsv
+    with pytest.raises(ValueError, match="does not match the subjects"):
+        Dataset(
+            description=dataset.description,
+            participants=dataset.participants,
+            recordings=dataset.recordings + [(Entities(subject="02", task="mvc"), make_recording())],
+        )
+    # a row in participants.tsv for sub-02, who has no recording
+    with pytest.raises(ValueError, match="does not match the subjects"):
+        Dataset(
+            description=dataset.description,
+            participants=dataset.participants + [Participant(participant_id="sub-02")],
+            recordings=dataset.recordings,
+        )
