@@ -37,9 +37,6 @@ def write_coordsystem_json(coordinate_system: CoordinateSystem, path: Path) -> N
 
 def write_recording(root: Path, entities: Entities, recording: Recording) -> list[Path]:
     """Write the signal and sidecars of one recording under root; return the written paths"""
-    if recording.electrodes or recording.coordinate_systems:
-        raise NotImplementedError("electrodes.tsv and coordsystem.json are not written yet")
-
     directory = build_directory(Path(root), entities)
     directory.mkdir(parents=True, exist_ok=True)
 
@@ -50,4 +47,16 @@ def write_recording(root: Path, entities: Entities, recording: Recording) -> lis
     write_bdf(recording, bdf_path)
     write_emg_json(recording.metadata, sidecar_path)
     write_channels_tsv(recording.channels, channels_path)
-    return [bdf_path, sidecar_path, channels_path]
+    written = [bdf_path, sidecar_path, channels_path]
+
+    if recording.electrodes:
+        electrodes_path = directory / build_filename(entities, "electrodes", ".tsv")
+        write_electrodes_tsv(recording.electrodes, electrodes_path)
+        written.append(electrodes_path)
+
+    for space, coordinate_system in recording.coordinate_systems.items():
+        coordsystem_path = directory / build_filename(entities, "coordsystem", ".json", space=space)
+        write_coordsystem_json(coordinate_system, coordsystem_path)
+        written.append(coordsystem_path)
+
+    return written
