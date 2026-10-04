@@ -18,6 +18,9 @@ dependencies = [
 [project.scripts]
 emg-bids = "emg_bids_converter.cli:main"
 
+[project.gui-scripts]
+emg-bids-gui = "emg_bids_converter.gui.app:main"
+
 [build-system]
 requires = ["uv_build>=0.9.9,<0.10.0"]
 build-backend = "uv_build"
